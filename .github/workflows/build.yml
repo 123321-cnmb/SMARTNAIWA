@@ -16,6 +16,16 @@ jobs:
             artifact: macos
           - platform: windows-latest
             artifact: windows
+            # Windows 只出 NSIS。
+            #
+            # tauri.conf.json 里 bundle.targets 是 "all"，Windows 上会连 MSI 一起打，
+            # 而 MSI 必挂：WiX 的 light.exe 处理不了非 ASCII 的产品名，
+            # 输出文件叫「奶蛙_0.1.0_x64_en-US.msi」，light.exe 直接报
+            # `failed to run ...\WixTools314\light.exe`（本机和 CI 一样炸）。
+            #
+            # 这个项目从头到尾也只发过 NSIS（scripts/build-windows.ps1 一直传
+            # --bundles nsis），所以直接不要 MSI。
+            args: --bundles nsis
 
     runs-on: ${{ matrix.platform }}
 
@@ -37,6 +47,8 @@ jobs:
 
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
+        with:
+          args: ${{ matrix.args }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
