@@ -71,7 +71,8 @@ impl AppConfig {
         if let Some(parent) = path.parent() {
             std::fs::create_dir_all(parent).map_err(|err| format!("创建配置目录失败：{err}"))?;
         }
-        let text = serde_json::to_string_pretty(self).map_err(|err| format!("序列化配置失败：{err}"))?;
+        let text =
+            serde_json::to_string_pretty(self).map_err(|err| format!("序列化配置失败：{err}"))?;
         std::fs::write(&path, text).map_err(|err| format!("写入配置失败：{err}"))
     }
     /// 环境变量 > 配置文件 > 默认值。

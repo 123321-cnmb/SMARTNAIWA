@@ -89,7 +89,10 @@ pub fn spawn_heartbeat(app: tauri::AppHandle) {
 
             // 冷却：一段时间内不重复主动开口。
             if last_spoke_at.elapsed() < Duration::from_secs(cooldown) {
-                eprintln!("[heartbeat] 冷却中，剩 {}s", cooldown - last_spoke_at.elapsed().as_secs());
+                eprintln!(
+                    "[heartbeat] 冷却中，剩 {}s",
+                    cooldown - last_spoke_at.elapsed().as_secs()
+                );
                 continue;
             }
 
@@ -225,10 +228,7 @@ async fn request_spontaneous(app: &tauri::AppHandle) -> Option<String> {
                     // 不能让它在心跳里改用户自选股。
                     const HEARTBEAT_ALLOWED: [&str; 2] = ["list_watchlist", "get_quote"];
                     if !HEARTBEAT_ALLOWED.contains(&call.function.name.as_str()) {
-                        eprintln!(
-                            "[heartbeat] 拒绝调用未授权工具 {}",
-                            call.function.name
-                        );
+                        eprintln!("[heartbeat] 拒绝调用未授权工具 {}", call.function.name);
                         continue;
                     }
 

@@ -10,7 +10,7 @@ use agent::tools::ToolRegistry;
 use agent::{AgentEvent, Message, MiniMaxClient};
 use config::{AppConfig, ConfigView};
 use tauri::ipc::Channel;
-use tauri::{Emitter, Manager, State, window::Color};
+use tauri::{window::Color, Emitter, Manager, State};
 
 /// 内置的默认 API Key，保证「下载即用」——别人拿到压缩包或安装包，
 /// 不用做任何配置就能直接跟奶蛙聊天。
@@ -202,11 +202,12 @@ impl AppState {
 
     /// 把情绪写回配置文件（跟 config.json 放一起），重启不丢。
     pub fn persist_mood(&self) -> Result<(), String> {
-        let mood = self.mood.lock().map_err(|_| "情绪状态异常".to_string())?.clone();
-        let mut config = self
-            .config
+        let mood = self
+            .mood
             .lock()
-            .map_err(|_| "配置状态异常".to_string())?;
+            .map_err(|_| "情绪状态异常".to_string())?
+            .clone();
+        let mut config = self.config.lock().map_err(|_| "配置状态异常".to_string())?;
         config.mood = Some(mood);
         config.save()
     }
@@ -316,14 +317,7 @@ async fn agent_chat(
             );
         };
 
-        agent::runner::run_agent(
-            &client,
-            &mut messages,
-            &registry,
-            &channel,
-            &broadcast,
-        )
-        .await
+        agent::runner::run_agent(&client, &mut messages, &registry, &channel, &broadcast).await
     };
 
     // 把这一轮的完整历史写回（去掉 system），下一轮接着聊。
@@ -526,7 +520,9 @@ fn spawn_watchlist_monitor(app: tauri::AppHandle) {
                             continue;
                         }
 
-                        watch.alerted.insert(quote.code.clone(), direction.to_string());
+                        watch
+                            .alerted
+                            .insert(quote.code.clone(), direction.to_string());
 
                         // 行情影响心情：涨了它就开心，跌了就蔫。
                         if let Ok(mut mood) = state.mood.lock() {
@@ -567,10 +563,7 @@ fn build_tray(app: &tauri::App) -> tauri::Result<()> {
     let separator = PredefinedMenuItem::separator(app)?;
     let quit = MenuItem::with_id(app, "tray-quit", "退出", true, None::<&str>)?;
 
-    let menu = Menu::with_items(
-        app,
-        &[&show, &hide, &chat, &settings, &separator, &quit],
-    )?;
+    let menu = Menu::with_items(app, &[&show, &hide, &chat, &settings, &separator, &quit])?;
 
     let icon = app
         .default_window_icon()

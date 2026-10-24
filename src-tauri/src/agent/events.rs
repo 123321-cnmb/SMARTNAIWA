@@ -9,7 +9,10 @@ pub enum AgentEvent {
     /// 模型回复的文本分片，逐字到达。
     Assistant { content: String },
     /// 模型请求调用工具。
-    ToolCall { name: String, args: serde_json::Value },
+    ToolCall {
+        name: String,
+        args: serde_json::Value,
+    },
     /// 工具执行成功。
     ToolResult { name: String, result: String },
     /// 工具执行失败。

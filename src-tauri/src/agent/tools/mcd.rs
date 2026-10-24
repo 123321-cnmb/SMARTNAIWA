@@ -70,12 +70,15 @@ impl McdClient {
             text.to_string()
         } else {
             text.lines()
-                .find_map(|line| line.strip_prefix("data:").map(|rest| rest.trim().to_string()))
+                .find_map(|line| {
+                    line.strip_prefix("data:")
+                        .map(|rest| rest.trim().to_string())
+                })
                 .unwrap_or_else(|| text.to_string())
         };
 
-        let value: Value =
-            serde_json::from_str(&payload).map_err(|err| format!("麦当劳响应不是合法 JSON：{err}"))?;
+        let value: Value = serde_json::from_str(&payload)
+            .map_err(|err| format!("麦当劳响应不是合法 JSON：{err}"))?;
 
         if let Some(error) = value.get("error") {
             let message = error
@@ -365,7 +368,10 @@ fn map_items(args: &Value) -> Vec<Value> {
             list.iter()
                 .map(|item| {
                     let mut out = serde_json::Map::new();
-                    out.insert("productCode".into(), json!(arg_str(item, "product_code", "")));
+                    out.insert(
+                        "productCode".into(),
+                        json!(arg_str(item, "product_code", "")),
+                    );
                     out.insert("quantity".into(), json!(arg_i64(item, "quantity", 1)));
                     let coupon_id = arg_str(item, "coupon_id", "");
                     if !coupon_id.is_empty() {
@@ -584,13 +590,11 @@ impl Tool for McdTool {
                     .map(|list| list.is_empty())
                     .unwrap_or(false);
                 if empty {
-                    return Err(
-                        "这些餐品在当前下单方式下买不到（接口把商品悄悄丢掉了）。\
+                    return Err("这些餐品在当前下单方式下买不到（接口把商品悄悄丢掉了）。\
                          **到店和外送是两套菜单，编码不一样**——\
                          比如巨无霸到店是 1100、外送是 901100。\
                          请用当前场景（到店/外送）重新查一次菜单，用新编码再算。"
-                            .to_string(),
-                    );
+                        .to_string());
                 }
             }
         }
@@ -1151,19 +1155,29 @@ mod tests {
         let csv = "[160]{productName,nutritionDescription,energyKj,energyKcal,protein,fat,carbohydrate,sodium,calcium}:\n  猪柳麦满分,null,1288,308,16,16,24,781,213\n  巨无霸,null,2237,543,25,33,45,1060,60";
         let items = parse_nutrition(csv);
         assert_eq!(items.len(), 2);
-        assert_eq!(items[0].get("name").and_then(|n| n.as_str()), Some("猪柳麦满分"));
+        assert_eq!(
+            items[0].get("name").and_then(|n| n.as_str()),
+            Some("猪柳麦满分")
+        );
         assert_eq!(items[0].get("kcal").and_then(|n| n.as_f64()), Some(308.0));
-        assert_eq!(items[1].get("name").and_then(|n| n.as_str()), Some("巨无霸"));
+        assert_eq!(
+            items[1].get("name").and_then(|n| n.as_str()),
+            Some("巨无霸")
+        );
         assert_eq!(items[1].get("kcal").and_then(|n| n.as_f64()), Some(543.0));
     }
 
     #[test]
     fn extracts_json_from_mixed_text() {
-        let text = "展示规则 blah blah\n{\"success\":true,\"code\":200,\"data\":{\"a\":1}}## 展示结果时";
+        let text =
+            "展示规则 blah blah\n{\"success\":true,\"code\":200,\"data\":{\"a\":1}}## 展示结果时";
         let value = extract_json(text).expect("应该能抽出 JSON");
         assert_eq!(value.get("success").and_then(|v| v.as_bool()), Some(true));
         assert_eq!(
-            value.get("data").and_then(|d| d.get("a")).and_then(|a| a.as_i64()),
+            value
+                .get("data")
+                .and_then(|d| d.get("a"))
+                .and_then(|a| a.as_i64()),
             Some(1)
         );
     }
@@ -1173,7 +1187,10 @@ mod tests {
         let text = "{\"success\":true,\"data\":{\"msg\":\"有个 } 括号\"}}";
         let value = extract_json(text).expect("应该能抽出 JSON");
         assert_eq!(
-            value.get("data").and_then(|d| d.get("msg")).and_then(|m| m.as_str()),
+            value
+                .get("data")
+                .and_then(|d| d.get("msg"))
+                .and_then(|m| m.as_str()),
             Some("有个 } 括号")
         );
     }
@@ -1201,7 +1218,10 @@ mod tests {
         let out = normalize("mcd_my_coupons", &raw).expect("应该成功");
         let value: Value = serde_json::from_str(&out).expect("应该是合法 JSON");
         assert_eq!(value.get("source").and_then(|s| s.as_str()), Some("mcd"));
-        assert_eq!(value.get("tool").and_then(|s| s.as_str()), Some("mcd_my_coupons"));
+        assert_eq!(
+            value.get("tool").and_then(|s| s.as_str()),
+            Some("mcd_my_coupons")
+        );
         assert!(value
             .get("text")
             .and_then(|t| t.as_str())
@@ -1221,11 +1241,17 @@ mod tests {
         prices_to_yuan(&mut data);
 
         assert_eq!(data.get("price").and_then(|v| v.as_f64()), Some(15.9));
-        assert_eq!(data.get("originalPrice").and_then(|v| v.as_f64()), Some(15.9));
+        assert_eq!(
+            data.get("originalPrice").and_then(|v| v.as_f64()),
+            Some(15.9)
+        );
         assert_eq!(data.get("discount").and_then(|v| v.as_f64()), Some(2.0));
         let item = &data["productList"][0];
         assert_eq!(item.get("subtotal").and_then(|v| v.as_f64()), Some(15.9));
-        assert_eq!(item.get("originalSubtotal").and_then(|v| v.as_f64()), Some(17.9));
+        assert_eq!(
+            item.get("originalSubtotal").and_then(|v| v.as_f64()),
+            Some(17.9)
+        );
         // 不是价格的字段不能被动
         assert_eq!(data["takeWayList"][0]["code"].as_str(), Some("eat-in"));
     }

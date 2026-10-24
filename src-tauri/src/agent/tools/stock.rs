@@ -332,9 +332,7 @@ pub async fn fetch_intraday(code: &str) -> Result<IntradaySeries, String> {
             .unwrap_or("")
             .to_string()
     };
-    let quote_num = |index: usize| -> f64 {
-        quote_str(index).parse::<f64>().unwrap_or(0.0)
-    };
+    let quote_num = |index: usize| -> f64 { quote_str(index).parse::<f64>().unwrap_or(0.0) };
 
     // day/query 的 data 是「按天分组」的数组，第一组就是当天。
     let Some(day) = node
@@ -720,7 +718,9 @@ fn decode_unicode_escapes(input: &str) -> String {
         if bytes[index] == b'\\'
             && index + 5 < bytes.len()
             && bytes[index + 1] == b'u'
-            && bytes[index + 2..index + 6].iter().all(|b| b.is_ascii_hexdigit())
+            && bytes[index + 2..index + 6]
+                .iter()
+                .all(|b| b.is_ascii_hexdigit())
         {
             let hex = &input[index + 2..index + 6];
             if let Ok(code) = u32::from_str_radix(hex, 16) {
