@@ -13,6 +13,24 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = ["macos-private-api"] }
+tauri = { version = "2", features = ["macos-private-api", "tray-icon"] }
+# 用系统浏览器打开外部链接（申请麦当劳 MCP Token 的注册页要在手机上登录，
+# 在应用内开网页没意义）。
+tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+reqwest = { version = "0.12", default-features = false, features = ["json", "native-tls", "stream"] }
+tokio = { version = "1", features = ["fs", "io-util", "sync"] }
+futures-util = { version = "0.3", default-features = false, features = ["std"] }
+encoding_rs = "0.8"
+async-trait = "0.1"
+# 生成支付二维码。关掉默认 feature（png/svg 那两套要引 image/svg crate），
+# 只要核心的矩阵，SVG 自己在代码里拼。
+qrcode = { version = "0.14", default-features = false }
+
+[profile.release]
+# 去掉符号表：exe 直接小一大截，分发体验更好。
+strip = true
+# 跨 crate 链接优化 + 单编译单元，能再压掉一些体积。
+lto = true
+codegen-units = 1

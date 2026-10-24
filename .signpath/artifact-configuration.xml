@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SignPath artifact configuration for naiwa-pet.
+
+  在 SignPath 控制台新建 Artifact Configuration 时，把这个文件的内容粘进去，
+  slug 建议用 windows-installer。
+-->
+<artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <zip-file>
+    <pe-file path="*.exe">
+      <authenticode-sign/>
+    </pe-file>
+  </zip-file>
+</artifact-configuration>

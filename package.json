@@ -9,10 +9,11 @@
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
+    "build:win": "powershell -ExecutionPolicy Bypass -File scripts/build-windows.ps1",
     "assets:naiwa": "node scripts/generate-pet-assets.mjs naiwa.mp4 public/pets/naiwa"
   },
   "dependencies": {
-    "@tauri-apps/api": "^2.0.0"
+    "@tauri-apps/api": "2.12.4"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.0.0",
