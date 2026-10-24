@@ -9,9 +9,28 @@ on:
 jobs:
   check:
     name: 检查
-    runs-on: ubuntu-latest
+    # 钉在 24.04：ubuntu-latest 正在往 Ubuntu 26 迁，而 Tauri v2 的 wry
+    # 依赖 webkit2gtk-4.1，新发行版的包名/版本可能对不上。
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+
+      # Tauri 在 Linux 上要 webkit2gtk / gtk / appindicator 这些系统库，
+      # GitHub 的 runner 镜像默认只带运行库、不带 -dev 包，
+      # 不装的话 cargo check 会在 pkg-config 那步直接失败。
+      - name: 安装 Linux 系统依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
 
       - uses: dtolnay/rust-toolchain@stable
         with:
